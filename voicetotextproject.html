@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarkari Pension Seva - Fixed PDF & Voice</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        :root {
+            --gov-maroon: #800000;
+            --gov-navy: #002e5b;
+            --border: #cccccc;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #555;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            width: 800px;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border: 1px solid #000;
+            min-height: min-content; /* PDF cut hone se bachane ke liye */
+        }
+
+        .header-table {
+            width: 100%;
+            border-bottom: 2px solid #000;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        .gov-title h2 { margin: 0; color: var(--gov-navy); }
+        .gov-title h3 { margin: 5px 0; color: var(--gov-maroon); }
+
+        .lang-bar {
+            background: #f1f1f1;
+            padding: 10px;
+            text-align: right;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .dept-title {
+            background: var(--gov-navy);
+            color: white;
+            padding: 8px 15px;
+            font-size: 18px;
+            margin: 25px 0 15px 0;
+            font-weight: bold;
+            text-transform: uppercase;
+            clear: both;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .input-wrapper {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        input, textarea {
+            border: none;
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .mic-btn {
+            background: #eee;
+            border: none;
+            cursor: pointer;
+            padding: 0 12px;
+            font-size: 18px;
+            border-left: 1px solid var(--border);
+        }
+
+        /* Recording Animation */
+        .recording {
+            background: #ff0000 !important;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .footer-btns {
+            margin-top: 40px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .btn-save { background: #27ae60; color: white; }
+        .btn-pdf { background: var(--gov-navy); color: white; }
+
+        /* PDF Output Styling */
+        .pdf-text { 
+            display: none; 
+            font-size: 16px; 
+            border-bottom: 1px solid #000; 
+            padding: 5px 0;
+            min-height: 20px;
+        }
+        
+        /* Yeh class PDF generate karte waqt active hoti hai */
+        .is-pdf .no-print { display: none !important; }
+        .is-pdf .input-wrapper { display: none !important; }
+        .is-pdf .pdf-text { display: block !important; }
+        .is-pdf .container { 
+            box-shadow: none; 
+            width: 100%; 
+            padding: 10px; 
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-application">
+    
+    <div class="lang-bar no-print">
+        <label style="display:inline; margin-right:10px;">Select Language:</label>
+        <select id="langSelect" style="padding:5px;">
+            <option value="en-US">English</option>
+            <option value="hi-IN">Hindi (हिन्दी)</option>
+            <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+        </select>
+    </div>
+
+    <div class="header-table">
+        <div class="gov-title">
+            <h2>GOVERNMENT SOCIAL WELFARE DEPARTMENT</h2>
+            <h3>OLD AGE PENSION SCHEME (APPLICATION FORM)</h3>
+        </div>
+    </div>
+
+    <form id="pensionForm">
+        <div class="dept-title">1. Personal Details (व्यक्तिगत विवरण)</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Applicant Full Name</label>
+                <div class="input-wrapper">
+                    <input type="text" id="name" placeholder="Speak Name">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('name', 'text')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-name"></div>
+            </div>
+            <div class="form-group">
+                <label>Age (60+)</label>
+                <div class="input-wrapper">
+                    <input type="number" id="age" placeholder="Speak Age">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('age', 'number')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-age"></div>
+            </div>
+            <div class="form-group">
+                <label>Aadhar Card Number</label>
+                <div class="input-wrapper">
+                    <input type="text" id="aadhar" placeholder="Speak 12 Digits">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('aadhar', 'number')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-aadhar"></div>
+            </div>
+            <div class="form-group">
+                <label>Gender</label>
+                <div class="input-wrapper">
+                    <input type="text" id="gender" placeholder="Male / Female">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('gender', 'gender')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-gender"></div>
+            </div>
+        </div>
+
+        <div class="dept-title">2. Contact & Address (संपर्क और पता)</div>
+        <div class="form-group">
+            <label>Full Residential Address</label>
+            <div class="input-wrapper">
+                <textarea id="address" rows="3" placeholder="Speak your complete address"></textarea>
+                <button type="button" class="mic-btn no-print" onclick="startVoice('address', 'text')">🎤</button>
+            </div>
+            <div class="pdf-text" id="p-address"></div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <div class="input-wrapper">
+                    <input type="text" id="mobile" placeholder="10 Digit Mobile">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('mobile', 'number')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-mobile"></div>
+            </div>
+            <div class="form-group">
+                <label>District</label>
+                <div class="input-wrapper">
+                    <input type="text" id="district" placeholder="District Name">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('district', 'text')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-district"></div>
+            </div>
+        </div>
+
+        <div class="dept-title">3. Bank Details (बैंक विवरण)</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Bank Name</label>
+                <div class="input-wrapper">
+                    <input type="text" id="bank" placeholder="e.g. Bank of Baroda">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('bank', 'text')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-bank"></div>
+            </div>
+            <div class="form-group">
+                <label>Account Number</label>
+                <div class="input-wrapper">
+                    <input type="text" id="acc" placeholder="Bank Account No.">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('acc', 'number')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-acc"></div>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>IFSC Code</label>
+                <div class="input-wrapper">
+                    <input type="text" id="ifsc" placeholder="Bank IFSC Code">
+                    <button type="button" class="mic-btn no-print" onclick="startVoice('ifsc', 'text')">🎤</button>
+                </div>
+                <div class="pdf-text" id="p-ifsc"></div>
+            </div>
+        </div>
+
+        <div class="footer-btns no-print">
+            <button type="button" class="btn btn-save" onclick="alert('Data Saved!')">SAVE DRAFT</button>
+            <button type="button" class="btn btn-pdf" onclick="generateProfessionalPDF()">GENERATE PDF</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // 1. VOICE RECOGNITION WITH FIXES
+    function startVoice(fieldId, type) {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = document.getElementById('langSelect').value;
+        const btn = event.currentTarget;
+
+        recognition.onstart = () => btn.classList.add('recording');
+
+        recognition.onresult = (event) => {
+            let result = event.results[0][0].transcript;
+            
+            // Age/Number Fix: Remove all text, keep only digits
+            if (type === 'number') {
+                result = result.replace(/\D/g, ''); 
+            }
+
+            // Gender Spelling Fix
+            if (type === 'gender') {
+                const lowResult = result.toLowerCase();
+                if (lowResult.includes('mail') || lowResult.includes('purush') || lowResult.includes('male') || lowResult.includes('પુરૂષ')) {
+                    result = 'Male';
+                } else if (lowResult.includes('female') || lowResult.includes('mahila') || lowResult.includes('stree') || lowResult.includes('સ્ત્રી')) {
+                    result = 'Female';
+                }
+            }
+            
+            document.getElementById(fieldId).value = result;
+        };
+
+        recognition.onend = () => btn.classList.remove('recording');
+        recognition.onerror = () => btn.classList.remove('recording');
+        recognition.start();
+    }
+
+    // 2. PDF GENERATION WITH CUT-OFF FIX
+    function generateProfessionalPDF() {
+        const element = document.getElementById('main-application');
+        const fields = ['name', 'age', 'aadhar', 'gender', 'address', 'mobile', 'district', 'bank', 'acc', 'ifsc'];
+
+        // Fill PDF labels
+        fields.forEach(f => {
+            const val = document.getElementById(f).value;
+            document.getElementById('p-' + f).innerText = val ? val : "____________________";
+        });
+
+        element.classList.add('is-pdf');
+
+        const opt = {
+            margin: [10, 10, 15, 10], // Bottom margin extra for safety
+            filename: 'Pension_Form.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                scrollY: 0 
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // Auto page break
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.classList.remove('is-pdf');
+        });
+    }
+</script>
+
+</body>
+</html>
